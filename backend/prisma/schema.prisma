@@ -1,12 +1,12 @@
 // Zebvo Prisma Schema
-// SQLite is used for zero-config local dev. Swap `provider = "postgresql"` for prod.
+// PostgreSQL (Neon) for local + deploy — set DATABASE_URL in backend/.env
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 

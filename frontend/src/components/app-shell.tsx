@@ -23,6 +23,7 @@ import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import toast from "react-hot-toast";
 
 interface Workspace {
   id: string;
@@ -70,9 +71,23 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     enabled: !!token,
   });
 
+  /** Keep persisted workspace id in sync with the server list (e.g. after DB reset / migration). */
   useEffect(() => {
-    if (workspaces && workspaces.length > 0 && !activeWorkspaceId) {
-      setActive(workspaces[0].id);
+    if (workspaces === undefined) return;
+    if (workspaces.length === 0) {
+      if (activeWorkspaceId) setActive(null);
+      return;
+    }
+    const ok =
+      !!activeWorkspaceId && workspaces.some((w) => w.id === activeWorkspaceId);
+    if (ok) return;
+    const stale = !!activeWorkspaceId;
+    setActive(workspaces[0].id);
+    if (stale) {
+      toast(
+        "Your saved workspace no longer exists on the server — switched to your first workspace.",
+        { duration: 5500 },
+      );
     }
   }, [workspaces, activeWorkspaceId, setActive]);
 
@@ -126,7 +141,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             {(workspaces?.length || 0) > 1 && (
               <select
                 value={activeWorkspaceId || ""}
-                onChange={(e) => setActive(e.target.value)}
+                onChange={(e) => setActive(e.target.value || null)}
                 className="mt-2 w-full text-xs bg-transparent border border-[hsl(var(--border))] rounded-md px-2 py-1"
               >
                 {workspaces?.map((w) => (

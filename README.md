@@ -15,7 +15,7 @@
 ┌──────────────────────────────┐         ┌───────────────────────────────┐
 │  Next.js 14 Frontend (3000)  │  HTTPS  │  Express + TypeScript (5050)  │
 │  • App Router / RSC          │ ◀─────▶ │  • Modular service layer      │
-│  • Tailwind + glass UI       │   SSE   │  • Prisma + SQLite            │
+│  • Tailwind + glass UI       │   SSE   │  • Prisma + PostgreSQL (Neon)      │
 │  • Zustand + React Query     │         │  • Gemini AI (text + image)   │
 │  • Streaming AI consumer     │         │  • PDF / MD / ZIP exporters   │
 └──────────────────────────────┘         └───────────────────────────────┘
@@ -76,7 +76,7 @@ Monorepo layout:
 
 ## 3. Tech stack
 
-**Backend** Node.js · Express · TypeScript · Prisma · SQLite · JWT · bcryptjs · Zod · pdfkit · archiver · `@google/generative-ai` · helmet · cors · morgan
+**Backend** Node.js · Express · TypeScript · Prisma · PostgreSQL (Neon) · JWT · bcryptjs · Zod · pdfkit · archiver · `@google/generative-ai` · helmet · cors · morgan
 **Frontend** Next.js 14 (App Router) · React 18 · TypeScript · Tailwind CSS · Zustand · TanStack Query · Framer Motion · lucide-react · react-hot-toast · next-themes · date-fns
 
 ## 4. Getting started
@@ -89,10 +89,11 @@ Monorepo layout:
 
 ```bash
 cd backend
-cp .env.example .env       # then paste your GEMINI_API_KEY into .env
+cp .env.example .env       # set DATABASE_URL = Neon Postgres URI, GEMINI_API_KEY, JWT_SECRET
 npm install
-npm run prisma:push        # creates SQLite DB + generates Prisma client
-npm run seed               # optional: creates demo@zebvo.app / demo1234
+npx prisma generate
+npx prisma migrate deploy   # applies prisma/migrations/* to Neon (empty DB first time)
+npm run seed               # optional: demo@zebvo.app / demo1234
 npm run dev                # http://localhost:5050
 ```
 
@@ -114,7 +115,7 @@ Open `http://localhost:3000` → sign up → onboarding creates your first works
 | Key | Required | Notes |
 |---|---|---|
 | `PORT` | no (default `5050`) | API port (5000 conflicts with macOS AirPlay) |
-| `DATABASE_URL` | yes (default `file:./dev.db`) | Prisma connection string |
+| `DATABASE_URL` | yes | **Neon Postgres** connection string, e.g. `postgresql://user:pass@ep-xxx.aws.neon.tech/neondb?sslmode=require` |
 | `JWT_SECRET` | yes | At least 32 random chars |
 | `JWT_EXPIRES_IN` | no | e.g. `7d` |
 | `GEMINI_API_KEY` | **yes** | Required for AI generation |
@@ -215,7 +216,7 @@ For structured types (threads, hashtags, carousels, reels, etc.) the prompt enfo
 
 - **Scheduling is UI-only**, as required. No cron, no posting integration. The DB stores intent only.
 - **Gemini API key lives on the server** — never exposed to the browser.
-- **PostgreSQL ready** — flip `provider = "postgresql"` in `prisma/schema.prisma` and update `DATABASE_URL`; no code changes needed.
+- **PostgreSQL (Neon)** — `provider = "postgresql"` in `prisma/schema.prisma`. Create a free DB at [Neon](https://console.neon.tech), copy the URI into `DATABASE_URL`, then run `npx prisma migrate deploy`.
 
 ---
 
