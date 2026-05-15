@@ -1,12 +1,8 @@
-import "express";
-
 declare global {
   namespace Express {
     interface Request {
-      user?: {
-        id: string;
-        email: string;
-      };
+      /** Set by `authRequired` after JWT verification */
+      user?: { id: string; email: string };
     }
   }
 }
