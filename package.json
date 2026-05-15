@@ -1,0 +1,15 @@
+{
+  "name": "zebvo",
+  "private": true,
+  "scripts": {
+    "dev": "node scripts/zebvo-dev-banner.mjs",
+    "dev:frontend": "node scripts/zebvo-dev-banner.mjs",
+    "dev:backend": "npm run dev --prefix backend",
+    "dev:clean": "npm run dev:clean --prefix frontend",
+    "dev:all": "concurrently -k -n api,web -c blue,magenta \"npm run dev --prefix backend\" \"node scripts/zebvo-dev-banner.mjs\"",
+    "postinstall": "node scripts/warn-wrong-localhost.mjs"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}

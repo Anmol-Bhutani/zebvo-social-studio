@@ -1,0 +1,123 @@
+// Zebvo Prisma Schema
+// SQLite is used for zero-config local dev. Swap `provider = "postgresql"` for prod.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  passwordHash String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  workspaces Workspace[]
+  contents   Content[]
+  schedules  Schedule[]
+  templates  PromptTemplate[]
+}
+
+model Workspace {
+  id             String   @id @default(cuid())
+  userId         String
+  name           String
+  description    String?
+  targetAudience String?
+  industry       String?
+  brandVoice     String?
+  colorTheme     String?  // optional hex color for UI accent
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  contents  Content[]
+  schedules Schedule[]
+  templates PromptTemplate[]
+
+  @@index([userId])
+}
+
+model Content {
+  id          String   @id @default(cuid())
+  workspaceId String
+  userId      String
+  type        String   // instagram_caption | linkedin_post | twitter_thread | hashtags | carousel | marketing_copy | campaign_idea | reel_script
+  platform    String   // instagram | linkedin | twitter | facebook | tiktok | youtube | generic
+  tone        String   // professional | funny | luxury | casual | inspirational | bold | minimal
+  title       String?
+  body        String   // main content body (markdown / plaintext)
+  imageUrl    String?  // base64 data URL or external URL
+  metadata    String?  // JSON stringified (carousel slides, thread items, hashtags array, etc.)
+  prompt      String?  // user-supplied extra instruction
+  status      String   @default("draft") // draft | approved | scheduled | archived
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  workspace Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  versions  ContentVersion[]
+  schedules Schedule[]
+
+  @@index([workspaceId])
+  @@index([userId])
+}
+
+model ContentVersion {
+  id        String   @id @default(cuid())
+  contentId String
+  body      String
+  imageUrl  String?
+  metadata  String?
+  prompt    String?
+  createdAt DateTime @default(now())
+
+  content Content @relation(fields: [contentId], references: [id], onDelete: Cascade)
+
+  @@index([contentId])
+}
+
+model Schedule {
+  id          String   @id @default(cuid())
+  workspaceId String
+  contentId   String
+  userId      String
+  scheduledAt DateTime
+  status      String   @default("scheduled") // scheduled | draft | published_mock
+  note        String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  content   Content   @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId])
+  @@index([scheduledAt])
+}
+
+model PromptTemplate {
+  id          String   @id @default(cuid())
+  workspaceId String?
+  userId      String
+  name        String
+  description String?
+  contentType String
+  platform    String
+  tone        String
+  promptBody  String
+  isSystem    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  workspace Workspace? @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
