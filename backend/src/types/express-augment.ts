@@ -1,3 +1,6 @@
+/** Loaded from `index.ts` so CI/Vercel typechecks pick up `Express.Request.user`. */
+export {};
+
 declare global {
   namespace Express {
     interface Request {
@@ -6,5 +9,3 @@ declare global {
     }
   }
 }
-
-export {};
