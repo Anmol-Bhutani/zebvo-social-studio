@@ -4,7 +4,7 @@ import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
 import cookieParser from "cookie-parser";
-import { env } from "./config/env";
+import { env, getCorsAllowedOrigins } from "./config/env";
 import { apiRouter } from "./routes";
 import { errorHandler } from "./middleware/errorHandler";
 
@@ -13,7 +13,7 @@ const app = express();
 app.use(helmet({ crossOriginResourcePolicy: false }));
 app.use(
   cors({
-    origin: env.CORS_ORIGIN.split(",").map((s) => s.trim()),
+    origin: getCorsAllowedOrigins(),
     credentials: true,
   }),
 );

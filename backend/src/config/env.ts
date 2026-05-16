@@ -18,3 +18,15 @@ export const env = {
   GEMINI_TEXT_MODEL: process.env.GEMINI_TEXT_MODEL || "gemini-2.0-flash",
   GEMINI_IMAGE_MODEL: process.env.GEMINI_IMAGE_MODEL || "gemini-2.0-flash-exp-image-generation",
 };
+
+/** Merge configured origins with this deployment's hostname (every Preview/Production URL). */
+export function getCorsAllowedOrigins(): string[] {
+  const fromEnv = env.CORS_ORIGIN.split(",").map((s) => s.trim()).filter(Boolean);
+  const set = new Set(fromEnv);
+  const vercelHost = process.env.VERCEL_URL?.trim();
+  if (vercelHost) {
+    const normalized = vercelHost.startsWith("http") ? vercelHost : `https://${vercelHost}`;
+    set.add(normalized.replace(/\/$/, ""));
+  }
+  return [...set];
+}

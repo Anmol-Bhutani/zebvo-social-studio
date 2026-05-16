@@ -137,7 +137,7 @@ Open `http://localhost:3000` → sign up → onboarding creates your first works
 Deploy **frontend + backend** as one project using root [`vercel.json`](vercel.json) ([Vercel Services](https://vercel.com/docs/services)): Next.js **`frontend`** at `/`, Express **`backend`** at **`/api`**.
 
 1. Import this repo from GitHub; Framework preset **Services** (detects both apps).
-2. **Environment variables** (Production — add Preview too if you want previews working): **`DATABASE_URL`**, **`JWT_SECRET`**, **`GEMINI_API_KEY`**, **`CORS_ORIGIN`** (must be your live frontend URL, not `localhost`).
+2. **Environment variables** (Production — add Preview too if you want previews working): **`DATABASE_URL`**, **`JWT_SECRET`**, **`GEMINI_API_KEY`**, **`CORS_ORIGIN`** (your canonical frontend URL, e.g. production `.vercel.app`). Preview deployments still work: the API automatically allows **`VERCEL_URL`** (set by Vercel per deployment).
 3. Omit **`NEXT_PUBLIC_API_URL`** so the browser hits **`/api`** on the same deployment.
 4. The backend uses **`npm run vercel-build`** (`prisma generate`, **`prisma migrate deploy`**, **`tsc`**). **`DATABASE_URL`** must be set before the first deploy.
 
