@@ -31,6 +31,7 @@ Monorepo layout:
 ```
 .
 ├── backend/                Express + Prisma + Gemini
+│   ├── prisma/             schema.prisma + migrations (PostgreSQL / Neon)
 │   └── src/
 │       ├── config/         env + prisma client
 │       ├── middleware/     auth (JWT) + error handler
@@ -44,6 +45,7 @@ Monorepo layout:
 │       ├── components/     UI kit + AppShell + ThemeToggle
 │       ├── lib/            API client (fetch + SSE)
 │       └── store/          zustand (auth, active workspace)
+├── vercel.json             Vercel Services: Next.js `/` + Express `/api` (optional deploy path)
 └── README.md
 ```
 
@@ -56,9 +58,10 @@ Monorepo layout:
 | **Save generated content history** | `Content` + `ContentVersion` models in `prisma/schema.prisma` |
 | **AI content generation (Gemini)** | `backend/src/services/ai.service.ts`, `frontend/src/app/generate` |
 | **Captions, posts, threads, hashtags, carousels, marketing copy, campaigns, reels** | Single generate endpoint with 8 content types |
-| **Platform + tone selectors** | `frontend/src/app/generate/page.tsx` |
+| **Platform + tone selectors** | `frontend/src/app/generate/generate-client.tsx` (thin `page.tsx` wraps Suspense + query params) |
 | **Save / edit / delete / regenerate** | `frontend/src/app/library/[id]/page.tsx` (regenerate auto-archives to `ContentVersion`) |
 | **Scheduling UI (no actual posting)** | `frontend/src/app/schedule/page.tsx` — calendar **and** list views |
+| **Library filters / listing** | `frontend/src/app/library/library-client.tsx` (thin `page.tsx` wraps Suspense) |
 | **Export PDF / Markdown / ZIP & JSON** | `backend/src/services/export.service.ts` (pdfkit + archiver) |
 
 ### Bonus features delivered
@@ -121,15 +124,26 @@ Open `http://localhost:3000` → sign up → onboarding creates your first works
 | `GEMINI_API_KEY` | **yes** | Required for AI generation |
 | `GEMINI_TEXT_MODEL` | no | Default `gemini-2.0-flash` |
 | `GEMINI_IMAGE_MODEL` | no | Default `gemini-2.0-flash-exp-image-generation` |
-| `CORS_ORIGIN` | no | Default `http://localhost:3000` |
+| `CORS_ORIGIN` | no | Default `http://localhost:3000`. **Production:** set to your deployed site origin (e.g. `https://your-app.vercel.app`). |
 
 `frontend/.env.local`
 
 | Key | Notes |
 |---|---|
-| `NEXT_PUBLIC_API_URL` | Backend URL, default `http://localhost:5050` |
+| `NEXT_PUBLIC_API_URL` | **Local:** `http://localhost:5050` (see `.env.example`). **Same-domain production (Vercel Services):** leave unset — the client uses the current origin and calls `/api`. |
 
-## 6. API surface
+## 6. Deploy (Vercel)
+
+Deploy **frontend + backend** as one project using root [`vercel.json`](vercel.json) ([Vercel Services](https://vercel.com/docs/services)): Next.js **`frontend`** at `/`, Express **`backend`** at **`/api`**.
+
+1. Import this repo from GitHub; Framework preset **Services** (detects both apps).
+2. **Environment variables** (Production — add Preview too if you want previews working): **`DATABASE_URL`**, **`JWT_SECRET`**, **`GEMINI_API_KEY`**, **`CORS_ORIGIN`** (must be your live frontend URL, not `localhost`).
+3. Omit **`NEXT_PUBLIC_API_URL`** so the browser hits **`/api`** on the same deployment.
+4. The backend uses **`npm run vercel-build`** (`prisma generate`, **`prisma migrate deploy`**, **`tsc`**). **`DATABASE_URL`** must be set before the first deploy.
+
+Smoke test: **`https://<your-domain>/api/health`** → `{ ok: true, ... }`.
+
+## 7. API surface
 
 ```
 POST   /api/auth/register             { email, password, name } → { user, token }
@@ -166,7 +180,7 @@ GET    /api/export/workspace/:id      (ZIP with manifest + per-item markdown + J
 GET    /api/health
 ```
 
-## 7. Database schema
+## 8. Database schema
 
 | Model | Purpose |
 |---|---|
@@ -179,7 +193,7 @@ GET    /api/health
 
 Indexes on `userId`, `workspaceId`, and `scheduledAt` for fast filters.
 
-## 8. AI prompt engineering
+## 9. AI prompt engineering
 
 Every generation injects the workspace's brand profile into a structured system prompt before the task instruction:
 
@@ -201,7 +215,7 @@ Tone profile: warm, friendly, conversational
 
 For structured types (threads, hashtags, carousels, reels, etc.) the prompt enforces strict JSON output, and the backend tolerantly parses it into typed `metadata` so the UI can render rich layouts (slide cards, tweet stack, scene cards).
 
-## 9. Why this submission stands out
+## 10. Why this submission stands out
 
 1. **Clean service-oriented architecture** — every domain has its own service (`ai`, `auth`, `workspace`, `content`, `schedule`, `template`, `export`), keeping controllers thin.
 2. **Real streaming** — `/contents/generate/stream` is a true SSE endpoint that surfaces tokens as Gemini produces them. The UI updates live.
@@ -212,7 +226,7 @@ For structured types (threads, hashtags, carousels, reels, etc.) the prompt enfo
 7. **Modern, glassy UI** with dark mode by default, gradient mesh background, animated cards via Framer Motion.
 8. **Scoped, secured data access** — every service verifies `userId` ownership before reading or mutating.
 
-## 10. Notes on the task spec
+## 11. Notes on the task spec
 
 - **Scheduling is UI-only**, as required. No cron, no posting integration. The DB stores intent only.
 - **Gemini API key lives on the server** — never exposed to the browser.
