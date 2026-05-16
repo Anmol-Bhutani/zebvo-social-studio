@@ -141,11 +141,14 @@ Deploy **frontend + backend** as one project using root [`vercel.json`](vercel.j
 3. Omit **`NEXT_PUBLIC_API_URL`** so the browser hits **`/api`** on the same deployment.
 4. The backend uses **`npm run vercel-build`** (`prisma generate`, **`prisma migrate deploy`**, **`tsc`**). **`DATABASE_URL`** must be set before the first deploy.
 
+The backend **`package.json`** runs **`postinstall`** → **`prisma generate`** and lists **`prisma`** as a **dependency** so install/build on Vercel always has Prisma CLI. Root **`vercel.json`** includes **`backend` service `includeFiles`** for **`node_modules/.prisma`** and **`@prisma/client`** so the query‑engine binaries are shipped with the Fluid function bundle.
+
 Smoke test: **`https://<your-domain>/api/health`** → `{ ok: true, ... }`.
 
 ### Troubleshooting (Vercel + Neon)
 
-- **`FUNCTION_INVOCATION_FAILED` / 500 on `/api` or signup:** Export the Express app with **`module.exports = app`** for Vercel’s Node handler (not only `export default`). This repo does that, skips `listen()` when **`VERCEL`** is set, and documents Neon pooling below.
+- **`FUNCTION_INVOCATION_FAILED` / 500 on `/api` or signup:** Export the Express app with **`module.exports = app`** for Vercel’s Node handler (not only `export default`). This repo does that, skips `listen()` when **`VERCEL`** is set, bundles Prisma via **`includeFiles`** + **`binaryTargets`** (see Deploy section above), and documents Neon pooling below.
+- **`GET /api/health` → `{"error":"Not found"}` (404)** though localhost works: Vercel Services strip **`/api`** before Express sees the path (so `/health`). When **`VERCEL`** is set, this repo mounts the API router at **`/`**; locally it stays **`/api`** (`http://localhost:5050`).
 - Confirm **`DATABASE_URL`** on Vercel is valid. For serverless, Neon’s **pooled / “transaction” connection string** (often host contains `-pooler`) is more reliable than a long‑lived direct connection; paste that into **`DATABASE_URL`** and redeploy.
 - **Signup works locally but not on Vercel:** Ensure **`frontend` does not rewrite `/api` to localhost when deployed.** This repo skips Next.js `/api` rewrites when **`VERCEL`** is set so traffic hits the Express service.
 
