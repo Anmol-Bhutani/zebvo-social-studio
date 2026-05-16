@@ -45,7 +45,13 @@ if (!process.env.VERCEL) {
   app.listen(port, () => {
     console.log(`\n  Zebvo API running on http://localhost:${port}`);
     console.log(`  CORS origin: ${env.CORS_ORIGIN}`);
-    console.log(`  Gemini key:  ${env.GEMINI_API_KEY ? "configured" : "MISSING (set GEMINI_API_KEY)"}\n`);
+    const ai =
+      env.OPENROUTER_API_KEY?.trim()
+        ? `OpenRouter (${env.OPENROUTER_MODEL})`
+        : env.GEMINI_API_KEY
+          ? `Gemini (${env.GEMINI_TEXT_MODEL})`
+          : "MISSING (set OPENROUTER_API_KEY or GEMINI_API_KEY)";
+    console.log(`  AI:          ${ai}\n`);
   });
 }
 

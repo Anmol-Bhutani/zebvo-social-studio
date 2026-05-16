@@ -92,7 +92,7 @@ Monorepo layout:
 
 ```bash
 cd backend
-cp .env.example .env       # set DATABASE_URL = Neon Postgres URI, GEMINI_API_KEY, JWT_SECRET
+cp .env.example .env       # set DATABASE_URL = Neon Postgres URI, JWT_SECRET, and OPENROUTER_API_KEY (or GEMINI_API_KEY)
 npm install
 npx prisma generate
 npx prisma migrate deploy   # applies prisma/migrations/* to Neon (empty DB first time)
@@ -121,7 +121,12 @@ Open `http://localhost:3000` → sign up → onboarding creates your first works
 | `DATABASE_URL` | yes | **Neon Postgres** connection string, e.g. `postgresql://user:pass@ep-xxx.aws.neon.tech/neondb?sslmode=require` |
 | `JWT_SECRET` | yes | At least 32 random chars |
 | `JWT_EXPIRES_IN` | no | e.g. `7d` |
-| `GEMINI_API_KEY` | **yes** | Required for AI generation |
+| `OPENROUTER_API_KEY` | **recommended** | [OpenRouter](https://openrouter.ai/) — pays from credit balance; avoids Gemini free-tier limits. When set, **text + streaming + images** use OpenRouter (`OPENROUTER_*` models). |
+| `OPENROUTER_MODEL` | no | Default `google/gemini-2.5-flash`. Browse IDs at [Models](https://openrouter.ai/models). |
+| `OPENROUTER_IMAGE_MODEL` | no | Default `google/gemini-2.5-flash-image`. Must support image output on OpenRouter. |
+| `OPENROUTER_SITE_URL` | no | Optional **`HTTP-Referer`** for OpenRouter attribution (your deployed site URL). |
+| `OPENROUTER_APP_TITLE` | no | Optional **`X-Title`** (default `Zebvo`). |
+| `GEMINI_API_KEY` | no* | Direct Google Gemini SDK (legacy path). *Required only if **`OPENROUTER_API_KEY`** is unset. |
 | `GEMINI_TEXT_MODEL` | no | Default `gemini-2.0-flash` |
 | `GEMINI_IMAGE_MODEL` | no | Default `gemini-2.0-flash-exp-image-generation` |
 | `CORS_ORIGIN` | no | Default `http://localhost:3000`. **Production:** set to your deployed site origin (e.g. `https://your-app.vercel.app`). |
@@ -137,7 +142,7 @@ Open `http://localhost:3000` → sign up → onboarding creates your first works
 Deploy **frontend + backend** as one project using root [`vercel.json`](vercel.json) ([Vercel Services](https://vercel.com/docs/services)): Next.js **`frontend`** at `/`, Express **`backend`** at **`/api`**.
 
 1. Import this repo from GitHub; Framework preset **Services** (detects both apps).
-2. **Environment variables** (Production — add Preview too if you want previews working): **`DATABASE_URL`**, **`JWT_SECRET`**, **`GEMINI_API_KEY`**, **`CORS_ORIGIN`** (your canonical frontend URL, e.g. production `.vercel.app`). Preview deployments still work: the API automatically allows **`VERCEL_URL`** (set by Vercel per deployment).
+2. **Environment variables** (Production — add Preview too if you want previews working): **`DATABASE_URL`**, **`JWT_SECRET`**, **`OPENROUTER_API_KEY`** (recommended) **or** **`GEMINI_API_KEY`**, **`CORS_ORIGIN`** (your canonical frontend URL, e.g. production `.vercel.app`). Optional: **`OPENROUTER_SITE_URL`** (referrer attribution). Preview deployments still work: the API automatically allows **`VERCEL_URL`** (set by Vercel per deployment).
 3. Omit **`NEXT_PUBLIC_API_URL`** so the browser hits **`/api`** on the same deployment.
 4. The backend uses **`npm run vercel-build`** (`prisma generate`, **`prisma migrate deploy`**, **`tsc`**). **`DATABASE_URL`** must be set before the first deploy.
 
@@ -227,7 +232,7 @@ For structured types (threads, hashtags, carousels, reels, etc.) the prompt enfo
 ## 10. Why this submission stands out
 
 1. **Clean service-oriented architecture** — every domain has its own service (`ai`, `auth`, `workspace`, `content`, `schedule`, `template`, `export`), keeping controllers thin.
-2. **Real streaming** — `/contents/generate/stream` is a true SSE endpoint that surfaces tokens as Gemini produces them. The UI updates live.
+2. **Real streaming** — `/contents/generate/stream` streams tokens from OpenRouter or Gemini. The UI updates live.
 3. **Versioning baked in** — regenerating a piece doesn't destroy history; a `ContentVersion` snapshot is auto-created.
 4. **Type-rich structured outputs** — hashtags render as chips, threads as tweet stack, carousels as gradient slides, reels as scene-by-scene table.
 5. **Three export formats + bulk workspace ZIP** — exceeds the spec.
@@ -238,7 +243,7 @@ For structured types (threads, hashtags, carousels, reels, etc.) the prompt enfo
 ## 11. Notes on the task spec
 
 - **Scheduling is UI-only**, as required. No cron, no posting integration. The DB stores intent only.
-- **Gemini API key lives on the server** — never exposed to the browser.
+- **AI keys stay on the server** — **`OPENROUTER_API_KEY`** or **`GEMINI_API_KEY`** never exposed to the browser.
 - **PostgreSQL (Neon)** — `provider = "postgresql"` in `prisma/schema.prisma`. Create a free DB at [Neon](https://console.neon.tech), copy the URI into `DATABASE_URL`, then run `npx prisma migrate deploy`.
 
 ---
