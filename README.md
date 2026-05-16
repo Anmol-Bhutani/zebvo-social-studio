@@ -4,7 +4,7 @@
 > A lightweight, production-style SaaS for AI-powered social media content creation, scheduling, and export — built with a clean service-oriented backend and a beautiful, animated Next.js frontend.
 
 <p align="center">
-  <em>Brand workspaces · Gemini text & image generation · Streaming AI · Calendar scheduling · PDF / Markdown / ZIP export · Dark mode</em>
+  <em>Brand workspaces · OpenRouter or Gemini text & image generation · Streaming AI · Calendar scheduling · PDF / Markdown / ZIP export · Dark mode</em>
 </p>
 
 ---
@@ -16,21 +16,21 @@
 │  Next.js 14 Frontend (3000)  │  HTTPS  │  Express + TypeScript (5050)  │
 │  • App Router / RSC          │ ◀─────▶ │  • Modular service layer      │
 │  • Tailwind + glass UI       │   SSE   │  • Prisma + PostgreSQL (Neon)      │
-│  • Zustand + React Query     │         │  • Gemini AI (text + image)   │
-│  • Streaming AI consumer     │         │  • PDF / MD / ZIP exporters   │
+│  • Zustand + React Query     │         │  • LLM via OpenRouter or Gemini    │
+│  • Streaming AI consumer     │         │  • PDF / MD / ZIP exporters       │
 └──────────────────────────────┘         └───────────────────────────────┘
                                                        │
-                                            ┌──────────▼──────────┐
-                                            │  Google Gemini API  │
-                                            │  text + image gen   │
-                                            └─────────────────────┘
+                                            ┌──────────▼───────────────────────┐
+                                            │  OpenRouter (default when set)   │
+                                            │  or Google Gemini API direct      │
+                                            └──────────────────────────────────┘
 ```
 
 Monorepo layout:
 
 ```
 .
-├── backend/                Express + Prisma + Gemini
+├── backend/                Express + Prisma + AI (OpenRouter or Gemini)
 │   ├── prisma/             schema.prisma + migrations (PostgreSQL / Neon)
 │   └── src/
 │       ├── config/         env + prisma client
@@ -56,7 +56,7 @@ Monorepo layout:
 | **Auth: signup / login / protected dashboard** | `backend/src/services/auth.service.ts`, `frontend/src/app/(login\|signup\|dashboard)` |
 | **Multiple workspaces / brand info** | `backend/src/services/workspace.service.ts`, `frontend/src/app/workspaces` |
 | **Save generated content history** | `Content` + `ContentVersion` models in `prisma/schema.prisma` |
-| **AI content generation (Gemini)** | `backend/src/services/ai.service.ts`, `frontend/src/app/generate` |
+| **AI content generation** | `backend/src/services/ai.service.ts` (OpenRouter preferred when `OPENROUTER_API_KEY` set), `frontend/src/app/generate` |
 | **Captions, posts, threads, hashtags, carousels, marketing copy, campaigns, reels** | Single generate endpoint with 8 content types |
 | **Platform + tone selectors** | `frontend/src/app/generate/generate-client.tsx` (thin `page.tsx` wraps Suspense + query params) |
 | **Save / edit / delete / regenerate** | `frontend/src/app/library/[id]/page.tsx` (regenerate auto-archives to `ContentVersion`) |
@@ -69,7 +69,7 @@ Monorepo layout:
 - ✅ **Real-time AI streaming** via Server-Sent Events (`/api/contents/generate/stream`)
 - ✅ **AI-generated reel/video scripts** with scene-by-scene structure
 - ✅ **Multi-image carousel** generation (6-slide layout in UI)
-- ✅ **AI image generation** for banners (Gemini image-capable model)
+- ✅ **AI image generation** for banners (OpenRouter Gemini image model or direct Gemini SDK)
 - ✅ **Content approval workflow** — `draft → approved → scheduled → archived` status
 - ✅ **Calendar view** for scheduling (month grid + per-day chips)
 - ✅ **Prompt templates** with placeholder substitution (`{brand}`, `{audience}`, etc.)
@@ -79,14 +79,14 @@ Monorepo layout:
 
 ## 3. Tech stack
 
-**Backend** Node.js · Express · TypeScript · Prisma · PostgreSQL (Neon) · JWT · bcryptjs · Zod · pdfkit · archiver · `@google/generative-ai` · helmet · cors · morgan
+**Backend** Node.js · Express · TypeScript · Prisma · PostgreSQL (Neon) · JWT · bcryptjs · Zod · pdfkit · archiver · OpenRouter (fetch) · `@google/generative-ai` (optional fallback) · helmet · cors · morgan
 **Frontend** Next.js 14 (App Router) · React 18 · TypeScript · Tailwind CSS · Zustand · TanStack Query · Framer Motion · lucide-react · react-hot-toast · next-themes · date-fns
 
 ## 4. Getting started
 
 ### Prerequisites
 - Node 18+
-- A Google Gemini API key — get one at https://aistudio.google.com/app/apikey
+- **AI:** **[OpenRouter](https://openrouter.ai/) API key** (recommended — avoids Gemini free-tier limits; add **`OPENROUTER_API_KEY`** to `backend/.env` **and** to Vercel for production), **or** a [Google Gemini API key](https://aistudio.google.com/app/apikey) only (**`GEMINI_API_KEY`**) if OpenRouter is unset.
 
 ### 1) Backend setup
 
@@ -142,7 +142,7 @@ Open `http://localhost:3000` → sign up → onboarding creates your first works
 Deploy **frontend + backend** as one project using root [`vercel.json`](vercel.json) ([Vercel Services](https://vercel.com/docs/services)): Next.js **`frontend`** at `/`, Express **`backend`** at **`/api`**.
 
 1. Import this repo from GitHub; Framework preset **Services** (detects both apps).
-2. **Environment variables** (Production — add Preview too if you want previews working): **`DATABASE_URL`**, **`JWT_SECRET`**, **`OPENROUTER_API_KEY`** (recommended) **or** **`GEMINI_API_KEY`**, **`CORS_ORIGIN`** (your canonical frontend URL, e.g. production `.vercel.app`). Optional: **`OPENROUTER_SITE_URL`** (referrer attribution). Preview deployments still work: the API automatically allows **`VERCEL_URL`** (set by Vercel per deployment).
+2. **Environment variables** (Production — add Preview too if you want previews working): **`DATABASE_URL`**, **`JWT_SECRET`**, **`OPENROUTER_API_KEY`** (recommended — **paste the same value as in local `backend/.env`; secrets are not copied from Git**) **or** **`GEMINI_API_KEY`**, **`CORS_ORIGIN`** (your canonical frontend URL, e.g. production `.vercel.app`). Optional: **`OPENROUTER_SITE_URL`** (referrer attribution). Preview deployments still work: the API automatically allows **`VERCEL_URL`** (set by Vercel per deployment).
 3. Omit **`NEXT_PUBLIC_API_URL`** so the browser hits **`/api`** on the same deployment.
 4. The backend uses **`npm run vercel-build`** (`prisma generate`, **`prisma migrate deploy`**, **`tsc`**). **`DATABASE_URL`** must be set before the first deploy.
 
