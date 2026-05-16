@@ -6,6 +6,12 @@ function getApiOrigin(): string {
   const env = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "");
   if (env) return env;
   if (typeof window !== "undefined") return window.location.origin;
+  const vercelHost = process.env.VERCEL_URL?.trim();
+  if (vercelHost) {
+    return vercelHost.startsWith("http")
+      ? vercelHost.replace(/\/$/, "")
+      : `https://${vercelHost.replace(/\/$/, "")}`;
+  }
   return "http://localhost:5050";
 }
 
