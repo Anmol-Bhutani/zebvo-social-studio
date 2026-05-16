@@ -48,4 +48,5 @@ if (!process.env.VERCEL) {
   });
 }
 
-export default app;
+/* Vercel's Node builder resolves `module.exports` for the handler; `export default` alone can be missed. */
+module.exports = app;

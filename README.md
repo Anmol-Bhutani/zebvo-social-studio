@@ -145,7 +145,7 @@ Smoke test: **`https://<your-domain>/api/health`** → `{ ok: true, ... }`.
 
 ### Troubleshooting (Vercel + Neon)
 
-- **`FUNCTION_INVOCATION_FAILED` / 500 on `/api` or signup:** The API must **`export default app`** and **`not` call `app.listen()` when `process.env.VERCEL` is set**. This repo skips `listen` on Vercel (Fluid Compute) and listens only for local/other hosts.
+- **`FUNCTION_INVOCATION_FAILED` / 500 on `/api` or signup:** Export the Express app with **`module.exports = app`** for Vercel’s Node handler (not only `export default`). This repo does that, skips `listen()` when **`VERCEL`** is set, and documents Neon pooling below.
 - Confirm **`DATABASE_URL`** on Vercel is valid. For serverless, Neon’s **pooled / “transaction” connection string** (often host contains `-pooler`) is more reliable than a long‑lived direct connection; paste that into **`DATABASE_URL`** and redeploy.
 - **Signup works locally but not on Vercel:** Ensure **`frontend` does not rewrite `/api` to localhost when deployed.** This repo skips Next.js `/api` rewrites when **`VERCEL`** is set so traffic hits the Express service.
 
