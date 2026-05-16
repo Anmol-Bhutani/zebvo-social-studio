@@ -25,11 +25,12 @@ app.get("/", (_req, res) => {
   res.json({
     name: "Zebvo API",
     description: "AI-powered social media content platform",
-    docs: "/api/health",
+    docs: process.env.VERCEL ? "/health" : "/api/health",
   });
 });
 
-app.use("/api", apiRouter);
+/** On Vercel Services, routePrefix strips `/api` before the backend sees the URL (`/health`, not `/api/health`). */
+app.use(process.env.VERCEL ? "/" : "/api", apiRouter);
 
 app.use((_req, res) => {
   res.status(404).json({ error: "Not found" });
