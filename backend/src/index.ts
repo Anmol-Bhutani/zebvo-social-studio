@@ -38,8 +38,14 @@ app.use((_req, res) => {
 app.use(errorHandler);
 
 const port = env.PORT;
-app.listen(port, () => {
-  console.log(`\n  Zebvo API running on http://localhost:${port}`);
-  console.log(`  CORS origin: ${env.CORS_ORIGIN}`);
-  console.log(`  Gemini key:  ${env.GEMINI_API_KEY ? "configured" : "MISSING (set GEMINI_API_KEY)"}\n`);
-});
+
+/* Local / traditional Node hosts (Railway, Render, etc.). Vercel Services inject Fluid Compute — do not listen inside the function bundle. */
+if (!process.env.VERCEL) {
+  app.listen(port, () => {
+    console.log(`\n  Zebvo API running on http://localhost:${port}`);
+    console.log(`  CORS origin: ${env.CORS_ORIGIN}`);
+    console.log(`  Gemini key:  ${env.GEMINI_API_KEY ? "configured" : "MISSING (set GEMINI_API_KEY)"}\n`);
+  });
+}
+
+export default app;
