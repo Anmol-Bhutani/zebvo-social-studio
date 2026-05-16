@@ -1,3 +1,4 @@
+import "../types/express-augment";
 import { Router } from "express";
 import { authRoutes } from "./auth.routes";
 import { workspaceRoutes } from "./workspace.routes";
