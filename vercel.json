@@ -10,7 +10,13 @@
       "entrypoint": "backend",
       "routePrefix": "/api",
       "framework": "express",
-      "maxDuration": 300
+      "maxDuration": 300,
+      "includeFiles": [
+        "node_modules/.prisma/**",
+        "node_modules/@prisma/client/**",
+        "backend/node_modules/.prisma/**",
+        "backend/node_modules/@prisma/client/**"
+      ]
     }
   }
 }
